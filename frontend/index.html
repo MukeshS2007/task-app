@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Task App</title>
+</head>
+<body>
+
+<h2>Login</h2>
+<input id="email" placeholder="email">
+<input id="password" placeholder="password" type="password">
+<button onclick="login()">Login</button>
+
+<h2>Create Task</h2>
+<input id="title" placeholder="Title">
+<input id="desc" placeholder="Description">
+<button onclick="createTask()">Create</button>
+
+<h2>Tasks</h2>
+<button onclick="getTasks()">Load Tasks</button>
+<ul id="tasks"></ul>
+
+<script>
+const API = "http://127.0.0.1:8000/api/v1";
+
+// LOGIN
+function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  fetch(API + "/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ email, password })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.access_token) {
+      localStorage.setItem("token", data.access_token);
+      alert("✅ Login successful");
+    } else {
+      alert("❌ Login failed");
+      console.log(data);
+    }
+  })
+  .catch(err => console.log(err));
+}
+
+// CREATE TASK
+function createTask() {
+  const title = document.getElementById("title").value;
+  const description = document.getElementById("desc").value;
+
+  fetch(API + "/tasks", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({ title, description })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("✅ Task Created");
+    getTasks(); // refresh list
+  })
+  .catch(err => console.log(err));
+}
+
+// GET TASKS
+function getTasks() {
+  fetch(API + "/tasks", {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const list = document.getElementById("tasks");
+    list.innerHTML = "";
+
+    data.forEach(task => {
+      const li = document.createElement("li");
+      li.innerText = task.title + " - " + task.description;
+      list.appendChild(li);
+    });
+  })
+  .catch(err => console.log(err));
+}
+</script>
+
+</body>
+</html>
